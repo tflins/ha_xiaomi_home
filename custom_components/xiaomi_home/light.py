@@ -260,6 +260,8 @@ class Light(MIoTServiceEntity, LightEntity):
         if ATTR_BRIGHTNESS in kwargs:
             brightness = brightness_to_value(
                 self._brightness_scale, kwargs[ATTR_BRIGHTNESS])
+            if self._prop_brightness.format_ == int:
+                brightness = round(brightness)
             await self.set_property_async(
                 prop=self._prop_brightness, value=brightness,
                 write_ha_state=False)
