@@ -664,8 +664,9 @@ class MIoTClient:
                         'code', MIoTErrorCode.CODE_MIPS_INVALID_RESULT.value)
                     if rc in [0, 1]:
                         return True
-                    raise MIoTClientError(
-                        self.__get_exec_error_with_rc(rc=rc))
+                    _LOGGER.debug(
+                        'gateway set prop failed, %s.%d.%d, rc=%d, '
+                        'try fallback route', did, siid, piid, rc)
             # Lan control
             device_lan = self._device_list_lan.get(did, None)
             if device_lan and device_lan.get('online', False):
@@ -678,8 +679,9 @@ class MIoTClient:
                     'code', MIoTErrorCode.CODE_MIPS_INVALID_RESULT.value)
                 if rc in [0, 1]:
                     return True
-                raise MIoTClientError(
-                    self.__get_exec_error_with_rc(rc=rc))
+                _LOGGER.debug(
+                    'lan set prop failed, %s.%d.%d, rc=%d, '
+                    'try cloud route', did, siid, piid, rc)
 
         # Cloud control
         device_cloud = self._device_list_cloud.get(did, None)
