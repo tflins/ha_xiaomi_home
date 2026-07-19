@@ -72,6 +72,9 @@ from .miot.const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+_FISH_TANK_MODEL = 'xiaomi.fishbowl.m200'
+_FISH_TANK_DIMMABLE_MODE = 3
+
 
 async def async_setup_entry(
         hass: HomeAssistant,
@@ -260,9 +263,7 @@ class Light(MIoTServiceEntity, LightEntity):
         if ATTR_BRIGHTNESS in kwargs:
             brightness = brightness_to_value(
                 self._brightness_scale, kwargs[ATTR_BRIGHTNESS])
-            await self.set_property_async(
-                prop=self._prop_brightness, value=brightness,
-                write_ha_state=False)
+            await self._set_brightness(brightness)
         # color-temperature
         if ATTR_COLOR_TEMP_KELVIN in kwargs:
             await self.set_property_async(
@@ -287,7 +288,26 @@ class Light(MIoTServiceEntity, LightEntity):
                 value=self.get_map_key(
                     map_=self._mode_map, value=kwargs[ATTR_EFFECT]),
                 write_ha_state=False)
-        self.async_write_ha_state()
+
+    async def _set_brightness(self, brightness: float) -> None:
+        try:
+            await self.set_property_async(
+                prop=self._prop_brightness, value=brightness,
+                write_ha_state=False)
+        except RuntimeError:
+            if (
+                self.miot_device.model != _FISH_TANK_MODEL
+                or self._prop_mode is None
+                or self.get_prop_value(self._prop_mode)
+                == _FISH_TANK_DIMMABLE_MODE
+            ):
+                raise
+            await self.set_property_async(
+                prop=self._prop_mode, value=_FISH_TANK_DIMMABLE_MODE,
+                write_ha_state=False)
+            await self.set_property_async(
+                prop=self._prop_brightness, value=brightness,
+                write_ha_state=False)
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn the light off."""
